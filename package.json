@@ -1,0 +1,26 @@
+{
+  "name": "advanced-flight-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "@prisma/studio": "^0.503.0",
+    "lodash": "^4.17.21",
+    "next": "^15.1.5",
+    "prisma": "^6.2.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/next": "^8.0.7",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "typescript": "^5.7.3"
+  }
+}

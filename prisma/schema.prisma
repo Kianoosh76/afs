@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Airport {
+  id          String   @id @default(uuid())
+  code        String   @unique // IATA or ICAO airport code (e.g., 'JFK')
+  name        String   // Full name of the airport (e.g., 'John F. Kennedy International Airport')
+  city        String   // City where the airport is located
+  country     String   // Country where the airport is located
+
+  airlines    Airline[] @relation("AirlineBase")
+  departures  Flight[]  @relation("FlightOrigin")
+  arrivals    Flight[]  @relation("FlightDestination")
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("airports")
+}
+
+model Airline {
+  id          String   @id @default(uuid())
+  name        String   // Name of the airline (e.g., 'American Airlines')
+  code        String   @unique // IATA or ICAO code for the airline (e.g., 'AA' or 'AAL')
+  country     String   // Country where the airline is based
+  logo        String?  // Airline logo   
+
+  baseId      String   // Foreign key for the main (base) airport
+  base        Airport  @relation("AirlineBase", fields: [baseId], references: [id])
+
+  flights     Flight[] // Relation to the Flight model
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("airlines")
+}
+
+model Flight {
+  id               String      @id @default(uuid())
+  flightNumber     String
+  departureTime    DateTime    // Date and time of departure
+  arrivalTime      DateTime    // Date and time of arrival
+  duration         Int         // Duration in minutes
+  price            Float       // Price in USD
+  currency         String      @default("USD") // Currency for the price
+  availableSeats   Int
+  status           FlightStatus @default(SCHEDULED) // Status of the flight
+
+  airlineId        String      // Foreign key to link to Airline
+  airline          Airline     @relation(fields: [airlineId], references: [id])
+  
+  originId         String      // Foreign key for origin airport
+  origin           Airport     @relation("FlightOrigin", fields: [originId], references: [id])
+  
+  destinationId    String      // Foreign key for destination airport
+  destination      Airport     @relation("FlightDestination", fields: [destinationId], references: [id])
+
+  bookings         Booking[]   @relation("BookingFlights") // Many-to-many relationship with Booking
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([originId, destinationId, departureTime], name: "flight_search_index") // Optimized search index
+  @@map("flights")
+}
+
+enum FlightStatus {
+  SCHEDULED
+  CANCELLED
+  DELAYED
+  DEPARTED
+  LANDED
+}
+
+model Booking {
+  id               String    @id @default(uuid())
+  firstName        String    // First name of the passenger
+  lastName         String    // Last name of the passenger
+  email            String    // Passenger's email address
+  passportNumber   String    // Passport number of the passenger
+  status           BookingStatus 
+  
+  flights          Flight[]  @relation("BookingFlights") // Many-to-many relationship with Flight
+
+  agencyId         String    // Foreign key for travel agency
+  agency           Agency    @relation("BookingAgency", fields: [agencyId], references: [id])
+
+  createdAt        DateTime  @default(now())
+  
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  UNKNOWN
+}
+
+model Agency {
+  id        String   @id @default(uuid())
+  name      String   @unique // Name of the agency
+  apiKey    String   @unique // API key for authentication
+  isActive  Boolean  @default(true) // Whether the agency is active or not
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings  Booking[] @relation("BookingAgency")
+
+  @@map("agencies")
+}
