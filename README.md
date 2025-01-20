@@ -23,6 +23,12 @@ To migrate the database, run
 npm prisma migrate deploy
 ```
 
+Finally, to run the server locally, use
+
+```
+npm run dev
+```
+
 ## Imporing data
 
 Below commands allow you to have a pre-populated database with more than 80 airports, 45 airlines, and 70,000 flights.
