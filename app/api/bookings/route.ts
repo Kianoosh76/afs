@@ -104,7 +104,7 @@ async function post(
     for (const flight of flights) {
       await prisma.flight.update({
         where: { id: flight.id },
-        data: { availableSeats: flight.availableSeats - 1 },
+        data: { availableSeats: { decrement: 1 } },
       });
     }
 
