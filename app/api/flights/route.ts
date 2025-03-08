@@ -4,6 +4,7 @@ import { flightSelectFields } from "./utils";
 import { withAuth } from "@/middlewares/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getSearchParams } from "@/utils/query";
+import { FlightStatus } from "@prisma/client";
 
 interface FlightsRequest {
   origin?: string; // city or airport code
@@ -25,7 +26,16 @@ async function get(request: NextRequest): AsyncApiResponse<FlightsResponse> {
   if (!origin || !destination || !date) {
     return NextResponse.json(
       {
-        error: "origin, destination, and date are required parameters",
+        error: "Origin, destination, and date are required parameters",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (origin === destination) {
+    return NextResponse.json(
+      {
+        error: "Origin and destination cannot be the same",
       },
       { status: 400 },
     );
@@ -92,6 +102,10 @@ async function get(request: NextRequest): AsyncApiResponse<FlightsResponse> {
         },
         originId: { in: originAirportIds },
         destinationId: { in: destinationAirportIds },
+        availableSeats: { gt: 0 },
+        status: {
+          in: [FlightStatus.SCHEDULED, FlightStatus.DELAYED],
+        },
       },
       select: flightSelectFields,
     });
@@ -110,6 +124,10 @@ async function get(request: NextRequest): AsyncApiResponse<FlightsResponse> {
           },
           originId: originAirportId,
           destinationId: { notIn: destinationAirportIds }, // Ensure it doesn't go directly to the destination
+          availableSeats: { gt: 0 },
+          status: {
+            in: [FlightStatus.SCHEDULED, FlightStatus.DELAYED],
+          },
         },
         select: flightSelectFields,
       });
@@ -126,14 +144,16 @@ async function get(request: NextRequest): AsyncApiResponse<FlightsResponse> {
             },
             originId: layoverAirportId,
             destinationId: { in: destinationAirportIds },
+            availableSeats: { gt: 0 },
+            status: {
+              in: [FlightStatus.SCHEDULED, FlightStatus.DELAYED],
+            },
           },
           select: flightSelectFields,
         });
 
         // Combine first and second leg flights to form an indirect flight
         for (const secondLeg of secondLegFlights) {
-          console.log(firstLeg.destinationId, secondLeg.originId);
-
           indirectFlights.push({
             firstLeg,
             secondLeg,

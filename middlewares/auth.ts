@@ -1,11 +1,10 @@
 import { prisma } from "@/utils/db";
+import { ApiHandler } from "@/utils/types";
 import { Agency } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-type Handler = (req: NextRequest) => Promise<NextResponse> | NextResponse;
-
-export function withAuth(handler: Handler): Handler {
-  return async (request: NextRequest & { agency?: Agency }) => {
+export function withAuth(handler: ApiHandler): ApiHandler {
+  return async (request: NextRequest & { agency?: Agency }, args) => {
     const apiKey = request.headers.get("x-api-key");
 
     if (!apiKey?.length) {
@@ -27,6 +26,6 @@ export function withAuth(handler: Handler): Handler {
     }
 
     request.agency = agency; // Attach agency to request object
-    return handler(request);
+    return handler(request, args);
   };
 }

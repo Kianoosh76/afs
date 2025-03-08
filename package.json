@@ -1,6 +1,6 @@
 {
   "name": "advanced-flight-system",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -21,6 +21,8 @@
     "@types/next": "^8.0.7",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
+    "eslint": "9.22.0",
+    "eslint-config-next": "15.2.1",
     "typescript": "^5.7.3"
   }
 }

@@ -1,5 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+// Api handler type for use in middlewares
+export type ApiHandler = (
+  req: NextRequest,
+  args: { params: Promise<any> },
+) => Promise<NextResponse> | NextResponse;
+
+// Request object with parsed JSON body
+export type RestfulNextRequest = NextRequest & {
+  data: any;
+};
+
+// Response object with a posible error message
 export type AsyncApiResponse<T> = Promise<NextResponse<T | { error: string }>>;
 
 export interface Airport {

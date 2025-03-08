@@ -1,10 +1,12 @@
 import { prisma } from "@/utils/db";
-import { AsyncApiResponse, Booking } from "@/utils/types";
+import { AsyncApiResponse, Booking, RestfulNextRequest } from "@/utils/types";
 import { transformBooking } from "../utils";
 import { Agency, BookingStatus } from "@prisma/client";
 import { withAuth } from "@/middlewares/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { flightSelectFields } from "../../flights/utils";
+import { restful } from "@/middlewares/restful";
+import { validateStringFields } from "@/utils/query";
 
 interface CancelRequest {
   lastName: string;
@@ -12,17 +14,10 @@ interface CancelRequest {
 }
 
 async function post(
-  request: NextRequest & { agency: Agency },
+  request: RestfulNextRequest & { agency: Agency },
 ): AsyncApiResponse<Booking> {
-  const { lastName, bookingReference } =
-    (await request.json()) as CancelRequest;
-
-  if (!lastName || !bookingReference) {
-    return NextResponse.json(
-      { error: "Missing lastName or bookingReference" },
-      { status: 400 },
-    );
-  }
+  validateStringFields(request, ["lastName", "bookingReference"]);
+  const { lastName, bookingReference } = request.data as CancelRequest;
 
   const booking = await prisma.booking.findFirst({
     where: {
@@ -63,5 +58,4 @@ async function post(
   return NextResponse.json(transformBooking(updatedBooking));
 }
 
-export const POST = withAuth(post);
-
+export const POST = withAuth(restful(post));

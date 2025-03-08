@@ -1,10 +1,12 @@
 import { prisma } from "@/utils/db";
-import { AsyncApiResponse, Booking } from "@/utils/types";
+import { AsyncApiResponse, Booking, RestfulNextRequest } from "@/utils/types";
 import { Agency, BookingStatus, FlightStatus } from "@prisma/client";
 import { transformBooking } from "./utils";
 import { flightSelectFields } from "../flights/utils";
 import { withAuth } from "@/middlewares/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { restful } from "@/middlewares/restful";
+import { validateStringFields } from "@/utils/query";
 
 interface BookingRequest {
   firstName: string;
@@ -15,22 +17,32 @@ interface BookingRequest {
 }
 
 async function post(
-  request: NextRequest & { agency: Agency },
+  request: RestfulNextRequest & { agency: Agency },
 ): AsyncApiResponse<Booking> {
+  validateStringFields(request, [
+    "firstName",
+    "lastName",
+    "email",
+    "passportNumber",
+  ]);
   const { flightIds, firstName, lastName, email, passportNumber } =
-    (await request.json()) as BookingRequest;
+    request.data as BookingRequest;
+
+  if (passportNumber.length < 9) {
+    return NextResponse.json(
+      { error: "Passport number must be 9 digits long" },
+      { status: 400 },
+    );
+  }
 
   if (
-    !flightIds?.length ||
-    !firstName ||
-    !lastName ||
-    !email ||
-    (passportNumber?.length ?? 0) < 9
+    !Array.isArray(flightIds) ||
+    !flightIds.length ||
+    flightIds.findIndex((id) => typeof id !== "string" || !id.length) !== -1
   ) {
     return NextResponse.json(
       {
-        error:
-          "Flight IDs, firstName, lastName, email, and passportNumber (9 characters) are required",
+        error: "Missing or invalid flight IDs",
       },
       { status: 400 },
     );
@@ -120,4 +132,4 @@ async function post(
   }
 }
 
-export const POST = withAuth(post);
+export const POST = withAuth(restful(post));
